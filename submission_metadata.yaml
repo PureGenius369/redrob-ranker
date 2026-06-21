@@ -1,29 +1,30 @@
 # Redrob Hackathon — Submission Metadata
-# >>> FILL THE 3 fields marked TODO before submitting (team name, GitHub URL, phone). <<<
+# >>> Add your phone + the deployed sandbox URL before submitting. <<<
 
 # ============================================================================
 # Team identity
 # ============================================================================
-team_name: "TODO-your-team-name"          # TODO: your registered team/participant name
+team_name: "Mann Sutariya"                 # solo participant
 
 primary_contact:
-  name: "Mann Sutaria"
+  name: "Mann Sutariya"
   email: "mannsutaria2605@gmail.com"
   phone: "+91-XXXXXXXXXX"                  # TODO: contact phone for top-N outreach
 
 team_members:
-  - name: "Mann Sutaria"
+  - name: "Mann Sutariya"
     email: "mannsutaria2605@gmail.com"
-    role: "ML Engineer / Team Lead"
+    role: "ML Engineer (solo)"
 
 # ============================================================================
 # Code and reproducibility
 # ============================================================================
-github_repo: "https://github.com/TODO-username/redrob-ranker"   # TODO: push & paste URL
+github_repo: "https://github.com/PureGenius369/redrob-ranker"
 
-sandbox_link: "https://github.com/TODO-username/redrob-ranker#reproduce-the-submission"
-# A Colab/HF-Spaces/Streamlit link can be added; the README documents a single
-# command that runs end-to-end on a small sample within the compute budget.
+sandbox_link: "https://github.com/PureGenius369/redrob-ranker#reproduce-the-submission"
+# TODO: replace with your deployed Streamlit/HF Spaces URL once live (see DEPLOY.md).
+# Until then, the GitHub README documents a single command that runs end-to-end on
+# a small sample within the compute budget.
 
 reproduce_command: "python rank.py --candidates ./candidates.jsonl --out ./submission.csv"
 # Pre-computation (one-time): pip install -r requirements.txt && python scripts/fetch_model.py
