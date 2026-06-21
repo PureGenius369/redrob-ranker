@@ -18,21 +18,21 @@ from reportlab.lib.units import mm
 from reportlab.lib.colors import HexColor
 from reportlab.pdfgen import canvas
 
-# --- Warm editorial palette (cream paper, slate ink, harmonized accents) ---
-PAPER = HexColor("#F7F3EC")   # warm off-white background (kind to the eyes)
-CARD = HexColor("#EFE9DD")    # subtle card fill on paper
-LINE = HexColor("#E2DACB")    # hairline
-INK = HexColor("#21303A")     # deep slate — titles, dark cover
-BODY = HexColor("#39434C")    # body text (softer than pure black)
-MUTED = HexColor("#7E8A94")   # captions / footnotes
-CREAM = HexColor("#F4EEE3")   # text on dark cover
+# --- Warm earth palette (parchment paper, espresso ink, terracotta/ochre/olive) ---
+PAPER = HexColor("#F3E7D1")   # warm parchment / sand background
+CARD = HexColor("#EAD9BB")    # warm tan card fill
+LINE = HexColor("#DBC8A4")    # warm hairline
+INK = HexColor("#352A1B")     # warm espresso — titles, dark cover
+BODY = HexColor("#4E4230")    # warm brown body text
+MUTED = HexColor("#937F5E")   # warm taupe captions
+CREAM = HexColor("#F6EDD8")   # text on dark cover
 WHITE = HexColor("#FFFFFF")
 
-AMBER = HexColor("#D9863A")   # primary accent (warm)
-TEAL = HexColor("#2E9488")    # secondary accent
-GOLD = HexColor("#C79A40")
-BRICK = HexColor("#BC5B47")
-STEEL = HexColor("#355E78")   # muted blue for the structured box
+AMBER = HexColor("#C45B26")   # terracotta — primary accent
+TEAL = HexColor("#6E7A3C")    # olive — secondary accent
+GOLD = HexColor("#BE8420")    # ochre
+BRICK = HexColor("#A8402A")   # rust
+STEEL = HexColor("#9A6132")   # warm clay/brown (structured box)
 
 W, H = landscape(A4)  # 842 x 595
 
@@ -358,7 +358,7 @@ if __name__ == "__main__":
     ap.add_argument("--candidates", required=True)
     ap.add_argument("--submission", required=True)
     ap.add_argument("--out", default="deck/Redrob_Approach_Deck.pdf")
-    ap.add_argument("--team", default="Mann Sutaria")
+    ap.add_argument("--team", default="Mann Sutariya")
     ap.add_argument("--date", default="June 2026")
     a = ap.parse_args()
     st = stats(a.candidates, a.submission)
