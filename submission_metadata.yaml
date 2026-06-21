@@ -1,0 +1,87 @@
+# Redrob Hackathon — Submission Metadata
+# >>> FILL THE 3 fields marked TODO before submitting (team name, GitHub URL, phone). <<<
+
+# ============================================================================
+# Team identity
+# ============================================================================
+team_name: "TODO-your-team-name"          # TODO: your registered team/participant name
+
+primary_contact:
+  name: "Mann Sutaria"
+  email: "mannsutaria2605@gmail.com"
+  phone: "+91-XXXXXXXXXX"                  # TODO: contact phone for top-N outreach
+
+team_members:
+  - name: "Mann Sutaria"
+    email: "mannsutaria2605@gmail.com"
+    role: "ML Engineer / Team Lead"
+
+# ============================================================================
+# Code and reproducibility
+# ============================================================================
+github_repo: "https://github.com/TODO-username/redrob-ranker"   # TODO: push & paste URL
+
+sandbox_link: "https://github.com/TODO-username/redrob-ranker#reproduce-the-submission"
+# A Colab/HF-Spaces/Streamlit link can be added; the README documents a single
+# command that runs end-to-end on a small sample within the compute budget.
+
+reproduce_command: "python rank.py --candidates ./candidates.jsonl --out ./submission.csv"
+# Pre-computation (one-time): pip install -r requirements.txt && python scripts/fetch_model.py
+
+# ============================================================================
+# Compute environment
+# ============================================================================
+compute:
+  platform: "Windows 11 laptop (local)"
+  cpu_cores: 8
+  ram_gb: 16
+  python_version: "3.12.10"
+  os: "Windows 11"
+  uses_gpu_for_inference: false           # CPU only — static embeddings, no torch
+  has_network_during_ranking: false       # no API calls during ranking
+  pre_computation_required: true          # one-time: vendor the static embedding model
+  pre_computation_time_minutes: 1
+
+# ============================================================================
+# AI tools declaration (transparency only — not penalized)
+# ============================================================================
+ai_tools_used:
+  - "Claude"        # Claude Code: architecture, EDA, implementation, profiling
+
+ai_usage_summary: |
+  Used Claude (Claude Code) as a pair-programmer for exploratory data analysis,
+  architecture design, implementation, and performance profiling. All design
+  decisions (the contrastive-anchor semantic signal, the anti-stuffing skill
+  trust weighting, the honeypot impossibility checks, the behavioral modifier
+  calibration) were derived from EDA on the provided pool and are inspectable in
+  the code. No candidate data is sent to any LLM at ranking time — the ranker is
+  a deterministic, CPU-only scoring system.
+
+# ============================================================================
+# Approach summary
+# ============================================================================
+methodology_summary: |
+  Hybrid, CPU-only ranker. Final score blends a structured JD-fit score (0.70)
+  with a contrastive static-embedding semantic score (0.30), then multiplies by a
+  behavioral availability modifier and a honeypot impossibility gate.
+
+  Structured fit encodes the JD's intent: title coherence (the decisive signal
+  against keyword stuffers, whose real title is "Marketing Manager"), career
+  evidence read from descriptions (built retrieval/ranking/recsys in production
+  with NDCG/MAP evaluation), 6–8yr experience band, product-vs-services,
+  NLP/IR-vs-CV/speech, location, and a trust-weighted skill score that discounts
+  stuffed lists (EDA shows skills are ~uniform random noise). The semantic signal,
+  cos(cand, JD-ideal) − cos(cand, JD-anti-pattern), surfaces plain-language strong
+  candidates and mutes stuffers. Behavioral signals down-weight the unavailable.
+  The honeypot gate removes internally-impossible profiles. Reasoning is generated
+  from each candidate's own parsed facts (no hallucination), with honest concerns.
+
+# ============================================================================
+# Declarations
+# ============================================================================
+declarations:
+  read_submission_spec: true
+  code_is_original_work: true
+  no_collusion: true
+  honeypot_check_done: true
+  reproduction_tested: true
