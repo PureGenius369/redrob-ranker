@@ -4,7 +4,7 @@ converter needed. Reads the final submission CSV + candidate pool to embed real
 top-100 statistics.
 
     python scripts/build_deck.py --candidates ./candidates.jsonl \
-        --submission ./outputs/submission_full.csv --out ./outputs/Redrob_Approach_Deck.pdf
+        --submission ./submission.csv --out ./deck/Redrob_Approach_Deck.pdf
 """
 from __future__ import annotations
 import argparse, csv, os, sys, datetime as dt
@@ -18,14 +18,21 @@ from reportlab.lib.units import mm
 from reportlab.lib.colors import HexColor
 from reportlab.pdfgen import canvas
 
-NAVY = HexColor("#0F2742")
-ACCENT = HexColor("#2E86DE")
-TEAL = HexColor("#0E9F6E")
-RED = HexColor("#E64A40")
-LIGHT = HexColor("#EEF2F6")
-MUTED = HexColor("#5B6B7B")
-DARK = HexColor("#16202B")
+# --- Warm editorial palette (cream paper, slate ink, harmonized accents) ---
+PAPER = HexColor("#F7F3EC")   # warm off-white background (kind to the eyes)
+CARD = HexColor("#EFE9DD")    # subtle card fill on paper
+LINE = HexColor("#E2DACB")    # hairline
+INK = HexColor("#21303A")     # deep slate — titles, dark cover
+BODY = HexColor("#39434C")    # body text (softer than pure black)
+MUTED = HexColor("#7E8A94")   # captions / footnotes
+CREAM = HexColor("#F4EEE3")   # text on dark cover
 WHITE = HexColor("#FFFFFF")
+
+AMBER = HexColor("#D9863A")   # primary accent (warm)
+TEAL = HexColor("#2E9488")    # secondary accent
+GOLD = HexColor("#C79A40")
+BRICK = HexColor("#BC5B47")
+STEEL = HexColor("#355E78")   # muted blue for the structured box
 
 W, H = landscape(A4)  # 842 x 595
 
@@ -33,8 +40,7 @@ W, H = landscape(A4)  # 842 x 595
 def stats(candidates_path, submission_path):
     rows = []
     with open(submission_path, encoding="utf-8") as f:
-        r = csv.DictReader(f)
-        for row in r:
+        for row in csv.DictReader(f):
             rows.append(row)
     top_ids = {row["candidate_id"] for row in rows}
     recs = {}
@@ -59,15 +65,10 @@ def stats(candidates_path, submission_path):
             hp += 1
     n = len(recs)
     return {
-        "n": n,
-        "titles": titles.most_common(8),
-        "india_pct": round(100 * india / n),
-        "otw_pct": round(100 * otw / n),
-        "mean_yoe": round(yoe_sum / n, 1),
-        "honeypots": hp,
-        "top5": rows[:5],
-        "score_hi": rows[0]["score"],
-        "score_lo": rows[-1]["score"],
+        "n": n, "titles": titles.most_common(8),
+        "india_pct": round(100 * india / n), "otw_pct": round(100 * otw / n),
+        "mean_yoe": round(yoe_sum / n, 1), "honeypots": hp,
+        "top5": rows[:5], "score_hi": rows[0]["score"], "score_lo": rows[-1]["score"],
     }
 
 
@@ -77,59 +78,71 @@ class Deck:
         self.page = 0
 
     def _footer(self):
-        self.c.setFont("Helvetica", 7)
-        self.c.setFillColor(MUTED)
-        self.c.drawString(18 * mm, 8 * mm, "Redrob — Intelligent Candidate Discovery & Ranking")
-        self.c.drawRightString(W - 18 * mm, 8 * mm, f"{self.page}")
+        c = self.c
+        c.setStrokeColor(LINE)
+        c.setLineWidth(0.8)
+        c.line(18 * mm, 12 * mm, W - 18 * mm, 12 * mm)
+        c.setFont("Helvetica", 7.5)
+        c.setFillColor(MUTED)
+        c.drawString(18 * mm, 8 * mm, "Redrob · Intelligent Candidate Discovery & Ranking")
+        c.setFillColor(AMBER)
+        c.setFont("Helvetica-Bold", 7.5)
+        c.drawRightString(W - 18 * mm, 8 * mm, f"{self.page:02d}")
 
-    def header(self, kicker, title, color=NAVY):
+    def header(self, kicker, title):
+        """Light editorial header: amber kicker, slate title, short accent rule."""
         self.page += 1
-        self.c.setFillColor(WHITE)
-        self.c.rect(0, 0, W, H, fill=1, stroke=0)
-        self.c.setFillColor(color)
-        self.c.rect(0, H - 30 * mm, W, 30 * mm, fill=1, stroke=0)
-        self.c.setFillColor(ACCENT)
-        self.c.rect(0, H - 30 * mm, W, 2.2 * mm, fill=1, stroke=0)
-        self.c.setFont("Helvetica-Bold", 10)
-        self.c.setFillColor(ACCENT)
-        self.c.drawString(18 * mm, H - 13 * mm, kicker.upper())
-        self.c.setFont("Helvetica-Bold", 21)
-        self.c.setFillColor(WHITE)
-        self.c.drawString(18 * mm, H - 24 * mm, title)
+        c = self.c
+        c.setFillColor(PAPER)
+        c.rect(0, 0, W, H, fill=1, stroke=0)
+        # three small accent ticks (brand mark)
+        for i, col in enumerate((AMBER, TEAL, GOLD)):
+            c.setFillColor(col)
+            c.rect(18 * mm + i * 4.6 * mm, H - 19 * mm, 3.4 * mm, 3.4 * mm, fill=1, stroke=0)
+        c.setFillColor(AMBER)
+        c.setFont("Helvetica-Bold", 10.5)
+        c.drawString(18 * mm, H - 26 * mm, kicker.upper())
+        c.setFillColor(INK)
+        c.setFont("Helvetica-Bold", 22)
+        c.drawString(18 * mm, H - 37 * mm, title)
+        c.setStrokeColor(AMBER)
+        c.setLineWidth(2.4)
+        c.line(18 * mm, H - 41 * mm, 42 * mm, H - 41 * mm)
         self._footer()
 
-    def bullets(self, items, x=20 * mm, y=H - 45 * mm, dy=11 * mm, size=12, gap=6):
+    def bullets(self, items, x=20 * mm, y=H - 54 * mm, dy=13 * mm, size=12.5):
+        c = self.c
         for it in items:
-            if isinstance(it, tuple):
-                head, sub = it
-            else:
-                head, sub = it, None
-            self.c.setFillColor(ACCENT)
-            self.c.circle(x + 1.5 * mm, y + 1.3 * mm, 1.3 * mm, fill=1, stroke=0)
-            self.c.setFont("Helvetica-Bold", size)
-            self.c.setFillColor(DARK)
-            self.c.drawString(x + 6 * mm, y, head)
+            head, sub = it if isinstance(it, tuple) else (it, None)
+            c.setFillColor(AMBER)
+            c.rect(x, y + 0.4 * mm, 2.4 * mm, 2.4 * mm, fill=1, stroke=0)  # square marker
+            c.setFont("Helvetica-Bold", size)
+            c.setFillColor(INK)
+            c.drawString(x + 6 * mm, y, head)
             if sub:
-                self.c.setFont("Helvetica", size - 2)
-                self.c.setFillColor(MUTED)
-                self.c.drawString(x + 6 * mm, y - 5.2 * mm, sub)
-                y -= dy + gap * mm
+                c.setFont("Helvetica", size - 2.5)
+                c.setFillColor(BODY)
+                c.drawString(x + 6 * mm, y - 5.6 * mm, sub)
+                y -= dy + 4 * mm
             else:
                 y -= dy
         return y
 
-    def box(self, x, y, w, h, fill, text, sub=None, tcolor=WHITE):
-        self.c.setFillColor(fill)
-        self.c.roundRect(x, y, w, h, 3 * mm, fill=1, stroke=0)
-        self.c.setFillColor(tcolor)
-        self.c.setFont("Helvetica-Bold", 11)
-        self.c.drawCentredString(x + w / 2, y + h - 8.5 * mm, text)
-        if sub:
-            self.c.setFont("Helvetica", 8)
-            ty = y + h - 14 * mm
-            for line in sub:
-                self.c.drawCentredString(x + w / 2, ty, line)
-                ty -= 4.2 * mm
+    def box(self, x, y, w, h, fill, text, sub=None):
+        c = self.c
+        c.setFillColor(fill)
+        c.roundRect(x, y, w, h, 3 * mm, fill=1, stroke=0)
+        c.setFillColor(WHITE)
+        c.setFont("Helvetica-Bold", 11.5)
+        c.drawCentredString(x + w / 2, y + h - 9 * mm, text)
+        c.setStrokeColor(HexColor("#FFFFFF"))
+        c.setLineWidth(0.5)
+        c.setFillColor(CREAM)
+        c.setFont("Helvetica", 8)
+        ty = y + h - 15 * mm
+        for line in (sub or []):
+            c.drawCentredString(x + w / 2, ty, line)
+            ty -= 4.4 * mm
 
     def save(self):
         self.c.showPage()
@@ -140,72 +153,87 @@ def build(st, out, team, date):
     d = Deck(out)
     c = d.c
 
-    # ---- Slide 1: title ----
+    # ---- Slide 1: cover (dark) ----
     d.page += 1
-    c.setFillColor(NAVY); c.rect(0, 0, W, H, fill=1, stroke=0)
-    c.setFillColor(ACCENT); c.rect(0, H - 4 * mm, W, 4 * mm, fill=1, stroke=0)
-    c.setFillColor(ACCENT); c.setFont("Helvetica-Bold", 12)
-    c.drawString(20 * mm, H - 38 * mm, "DATA & AI CHALLENGE  ·  INTELLIGENT CANDIDATE DISCOVERY & RANKING")
-    c.setFillColor(WHITE); c.setFont("Helvetica-Bold", 38)
-    c.drawString(20 * mm, H - 72 * mm, "Reading the profile,")
-    c.drawString(20 * mm, H - 88 * mm, "not the keywords.")
-    c.setFillColor(HexColor("#9FB3C8")); c.setFont("Helvetica", 14)
-    c.drawString(20 * mm, H - 104 * mm, "A hybrid, CPU-only ranker that beats keyword-stuffers,")
-    c.drawString(20 * mm, H - 112 * mm, "surfaces plain-language talent, and avoids the honeypots.")
-    c.setStrokeColor(ACCENT); c.setLineWidth(2); c.line(20 * mm, H - 120 * mm, 60 * mm, H - 120 * mm)
-    c.setFillColor(WHITE); c.setFont("Helvetica-Bold", 12)
-    c.drawString(20 * mm, 30 * mm, team)
-    c.setFillColor(MUTED); c.setFont("Helvetica", 10)
-    c.drawString(20 * mm, 23 * mm, f"Senior AI Engineer (Founding Team) JD   ·   {date}")
+    c.setFillColor(INK)
+    c.rect(0, 0, W, H, fill=1, stroke=0)
+    for i, col in enumerate((AMBER, TEAL, GOLD, BRICK)):
+        c.setFillColor(col)
+        c.rect(20 * mm + i * 7 * mm, H - 34 * mm, 5 * mm, 5 * mm, fill=1, stroke=0)
+    c.setFillColor(AMBER)
+    c.setFont("Helvetica-Bold", 11.5)
+    c.drawString(20 * mm, H - 46 * mm, "DATA & AI CHALLENGE  ·  INTELLIGENT CANDIDATE DISCOVERY & RANKING")
+    c.setFillColor(CREAM)
+    c.setFont("Helvetica-Bold", 40)
+    c.drawString(20 * mm, H - 78 * mm, "Reading the profile,")
+    c.setFillColor(AMBER)
+    c.drawString(20 * mm, H - 95 * mm, "not the keywords.")
+    c.setFillColor(HexColor("#AEB9C2"))
+    c.setFont("Helvetica", 14)
+    c.drawString(20 * mm, H - 112 * mm, "A hybrid, CPU-only ranker that beats keyword-stuffers,")
+    c.drawString(20 * mm, H - 120 * mm, "surfaces plain-language talent, and avoids the honeypots.")
+    c.setFillColor(CREAM)
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(20 * mm, 26 * mm, team)
+    c.setFillColor(MUTED)
+    c.setFont("Helvetica", 10)
+    c.drawString(20 * mm, 19 * mm, f"Senior AI Engineer (Founding Team) JD   ·   {date}")
     c.showPage()
 
-    # ---- Slide 2: the problem / the trap ----
+    # ---- Slide 2: problem ----
     d.header("The problem", "Keyword filters can't see what matters")
     d.bullets([
-        ("Recruiters miss the right person — not for lack of talent, but because keyword filters are blind to fit.",
-         "The JD is written to defeat keyword matching; the 'right answer' is reasoning about what the JD means."),
+        ("Recruiters miss the right person — keyword filters are blind to real fit.",
+         "The JD is written to defeat keyword matching; the right answer is reasoning about what it means."),
         ("The dataset is adversarial by design.",
          "Keyword stuffers, plain-language strong candidates, behavioral twins, and ~80 'impossible' honeypots."),
         ("The shipped sample submission deliberately falls for it.",
          "It ranks an HR Manager #1 and real ML Engineers at #27 / #48 / #99 — purely on AI-skill counts."),
-        ("Our goal: a shortlist a recruiter can trust — and that survives code reproduction + interview.",
+        ("Goal: a shortlist a recruiter can trust — that survives reproduction + interview.",
          "NDCG@10 dominates scoring (0.50), so the top-10 must be genuinely excellent."),
     ])
     c.showPage()
 
     # ---- Slide 3: what the JD means ----
     d.header("Reading between the lines", "What the role actually needs")
-    c.setFillColor(TEAL); c.setFont("Helvetica-Bold", 12)
-    c.drawString(20 * mm, H - 42 * mm, "FIT  (the ideal hire)")
+    c.setFillColor(TEAL)
+    c.setFont("Helvetica-Bold", 12.5)
+    c.drawString(20 * mm, H - 52 * mm, "FIT — the ideal hire")
     d.bullets([
-        ("6–8 yrs, applied ML at product companies (not services)", None),
-        ("Shipped search / ranking / retrieval / recsys to real users", None),
-        ("Embeddings + vector/hybrid search + rigorous ranking eval", None),
-        ("Strong NLP/IR; in/near Pune–Noida; actually available", None),
-    ], x=20 * mm, y=H - 52 * mm, dy=10 * mm, size=11, gap=0)
-    c.setFillColor(RED); c.setFont("Helvetica-Bold", 12)
-    c.drawString(120 * mm, H - 42 * mm, "ANTI-FIT  (explicit disqualifiers)")
+        "6–8 yrs, applied ML at product companies (not services)",
+        "Shipped search / ranking / retrieval / recsys to real users",
+        "Embeddings + vector/hybrid search + rigorous ranking eval",
+        "Strong NLP/IR; in/near Pune–Noida; actually available",
+    ], x=20 * mm, y=H - 62 * mm, dy=10.5 * mm, size=11.5)
+    c.setFillColor(BRICK)
+    c.setFont("Helvetica-Bold", 12.5)
+    c.drawString(120 * mm, H - 52 * mm, "ANTI-FIT — explicit disqualifiers")
     d.bullets([
-        ("Stuffed AI skills but a non-technical real title", None),
-        ("Pure research / academia with no production", None),
-        ("Only recent LangChain-on-OpenAI wrappers", None),
-        ("CV/speech-only · services-only · title-chasers · dormant", None),
-    ], x=120 * mm, y=H - 52 * mm, dy=10 * mm, size=11, gap=0)
+        "Stuffed AI skills but a non-technical real title",
+        "Pure research / academia with no production",
+        "Only recent LangChain-on-OpenAI wrappers",
+        "CV/speech-only · services-only · title-chasers · dormant",
+    ], x=120 * mm, y=H - 62 * mm, dy=10.5 * mm, size=11.5)
     c.showPage()
 
     # ---- Slide 4: architecture ----
     d.header("Architecture", "Four interpretable layers, no LLM at inference")
-    c.setFillColor(LIGHT); c.roundRect(20 * mm, H - 70 * mm, W - 40 * mm, 18 * mm, 3 * mm, fill=1, stroke=0)
-    c.setFillColor(DARK); c.setFont("Courier-Bold", 12)
-    c.drawCentredString(W / 2, H - 60 * mm, "score = (0.70·structured_fit + 0.30·semantic_fit) · behavioral_modifier · honeypot_gate")
-    bw, bh, by = 38 * mm, 34 * mm, H - 120 * mm
+    c.setFillColor(CARD)
+    c.roundRect(20 * mm, H - 72 * mm, W - 40 * mm, 16 * mm, 3 * mm, fill=1, stroke=0)
+    c.setFillColor(INK)
+    c.setFont("Courier-Bold", 11.5)
+    c.drawCentredString(W / 2, H - 63.5 * mm,
+                        "score = (0.70 structured_fit + 0.30 semantic_fit) x behavioral_modifier x honeypot_gate")
+    bw, bh, by = 38 * mm, 33 * mm, H - 118 * mm
     xs = [20 * mm, 70 * mm, 120 * mm, 170 * mm]
-    d.box(xs[0], by, bw, bh, NAVY, "Structured fit", ["title coherence", "career evidence", "skill trust", "domain · location"])
-    d.box(xs[1], by, bw, bh, ACCENT, "Semantic fit", ["contrastive", "JD-ideal minus", "JD-anti-pattern", "static embeds"])
-    d.box(xs[2], by, bw, bh, TEAL, "Behavioral", ["availability", "recency · response", "open-to-work", "notice period"])
-    d.box(xs[3], by, bw, bh, RED, "Honeypot gate", ["impossible", "tenure / skills", "→ removed from", "top-100"])
-    c.setFillColor(MUTED); c.setFont("Helvetica-Oblique", 10)
-    c.drawString(20 * mm, by - 9 * mm, "Two-pass design: scalar scoring over 100K, then full facts + grounded reasoning for the top 100. CPU-only, streams the pool.")
+    d.box(xs[0], by, bw, bh, STEEL, "Structured fit", ["title coherence", "career evidence", "skill trust", "domain · location"])
+    d.box(xs[1], by, bw, bh, TEAL, "Semantic fit", ["contrastive:", "JD-ideal minus", "JD-anti-pattern", "static embeds"])
+    d.box(xs[2], by, bw, bh, GOLD, "Behavioral", ["availability", "recency · response", "open-to-work", "notice period"])
+    d.box(xs[3], by, bw, bh, BRICK, "Honeypot gate", ["impossible", "tenure / skills", "removed from", "top-100"])
+    c.setFillColor(MUTED)
+    c.setFont("Helvetica-Oblique", 10)
+    c.drawString(20 * mm, by - 9 * mm,
+                 "Two-pass: scalar scoring over 100K, then full facts + grounded reasoning for the top 100. CPU-only, streams the pool.")
     c.showPage()
 
     # ---- Slide 5: structured ----
@@ -216,8 +244,8 @@ def build(st, out, team, date):
         ("Career evidence — read from descriptions, not skill tags.",
          "Credits demonstrated retrieval / ranking / production / NDCG-MAP evaluation / NLP-IR work."),
         ("Skill trust — defeats stuffing.",
-         "Skills reweighted by endorsements × duration × proficiency × platform assessment (raw lists ignored)."),
-        ("Plus: experience band (6–8), product-vs-services, NLP/IR-vs-CV/speech, location; disqualifier penalties.",
+         "Skills reweighted by endorsements x duration x proficiency x platform assessment (raw lists ignored)."),
+        ("Plus experience band, product-vs-services, NLP/IR-vs-CV/speech, location, disqualifier penalties.",
          "Research-only, LangChain-only, and title-chaser flags apply explicit multiplicative penalties."),
     ])
     c.showPage()
@@ -230,28 +258,32 @@ def build(st, out, team, date):
         ("Surfaces plain-language Tier-5s.",
          "Someone titled 'Software Engineer' who describes building a recommendation system rises on semantics."),
         ("model2vec static embeddings — distilled for retrieval.",
-         "No transformer forward pass, no torch, no GPU; the latency/quality tradeoff the JD explicitly asks about."),
+         "No transformer forward pass, no torch, no GPU: the latency/quality tradeoff the JD asks about."),
         ("Pure scikit-learn LSA fallback keeps it reproducible with zero downloads.", None),
     ])
     c.showPage()
 
     # ---- Slide 7: behavioral + honeypot ----
     d.header("Layers 3 & 4 — Available & possible", "Down-weight the unavailable; remove the impossible")
-    c.setFillColor(TEAL); c.setFont("Helvetica-Bold", 12); c.drawString(20 * mm, H - 42 * mm, "Behavioral modifier")
+    c.setFillColor(GOLD)
+    c.setFont("Helvetica-Bold", 12.5)
+    c.drawString(20 * mm, H - 52 * mm, "Behavioral modifier")
     d.bullets([
-        ("'Dormant 6 months + 5% response = not actually available.'", None),
-        ("Bounded multiplier from 23 signals, calibrated to the pool.", None),
-        ("Recency, response rate, open-to-work, notice, demand.", None),
-    ], x=20 * mm, y=H - 52 * mm, dy=10 * mm, size=11, gap=0)
-    c.setFillColor(RED); c.setFont("Helvetica-Bold", 12); c.drawString(120 * mm, H - 42 * mm, "Honeypot gate")
+        "'Dormant 6 months + 5% response = not available.'",
+        "Bounded multiplier from 23 signals, calibrated to the pool.",
+        "Recency, response rate, open-to-work, notice, demand.",
+    ], x=20 * mm, y=H - 62 * mm, dy=10.5 * mm, size=11.5)
+    c.setFillColor(BRICK)
+    c.setFont("Helvetica-Bold", 12.5)
+    c.drawString(120 * mm, H - 52 * mm, "Honeypot gate")
     d.bullets([
-        ("Detects internal impossibilities, not specific IDs.", None),
-        ("Tenure > time elapsed; ≥3 expert skills at 0 months.", None),
-        (f"{st['honeypots']} honeypots in our top-100 (cap is 10%).", None),
-    ], x=120 * mm, y=H - 52 * mm, dy=10 * mm, size=11, gap=0)
+        "Detects internal impossibilities, not specific IDs.",
+        "Tenure > time elapsed; ≥3 expert skills at 0 months.",
+        f"{st['honeypots']} honeypots in our top-100 (cap is 10%).",
+    ], x=120 * mm, y=H - 62 * mm, dy=10.5 * mm, size=11.5)
     c.showPage()
 
-    # ---- Slide 8: EDA insights ----
+    # ---- Slide 8: EDA ----
     d.header("What the data told us", "EDA on the full 100K pool drove every threshold")
     d.bullets([
         ("Skills are ~uniform random noise.",
@@ -267,46 +299,51 @@ def build(st, out, team, date):
 
     # ---- Slide 9: results ----
     d.header("Results", "A top-100 a recruiter can trust")
-    cards = [
-        (f"{st['india_pct']}%", "based in India"),
-        (f"{st['otw_pct']}%", "open to work"),
-        (f"{st['mean_yoe']}", "mean years exp."),
-        (f"{st['honeypots']}", "honeypots in top-100"),
-    ]
+    cards = [(f"{st['india_pct']}%", "based in India"), (f"{st['otw_pct']}%", "open to work"),
+             (f"{st['mean_yoe']}", "mean years exp."), (f"{st['honeypots']}", "honeypots in top-100")]
+    accents = [TEAL, GOLD, STEEL, BRICK]
     cx = 20 * mm
-    for big, lab in cards:
-        c.setFillColor(LIGHT); c.roundRect(cx, H - 70 * mm, 44 * mm, 22 * mm, 3 * mm, fill=1, stroke=0)
-        c.setFillColor(ACCENT); c.setFont("Helvetica-Bold", 22); c.drawString(cx + 5 * mm, H - 60 * mm, big)
-        c.setFillColor(MUTED); c.setFont("Helvetica", 9); c.drawString(cx + 5 * mm, H - 66 * mm, lab)
+    for (big, lab), col in zip(cards, accents):
+        c.setFillColor(CARD)
+        c.roundRect(cx, H - 74 * mm, 44 * mm, 23 * mm, 3 * mm, fill=1, stroke=0)
+        c.setFillColor(col)
+        c.rect(cx, H - 74 * mm, 2.6 * mm, 23 * mm, fill=1, stroke=0)
+        c.setFillColor(INK)
+        c.setFont("Helvetica-Bold", 23)
+        c.drawString(cx + 7 * mm, H - 63 * mm, big)
+        c.setFillColor(MUTED)
+        c.setFont("Helvetica", 9)
+        c.drawString(cx + 7 * mm, H - 69.5 * mm, lab)
         cx += 49 * mm
-    c.setFillColor(DARK); c.setFont("Helvetica-Bold", 11)
-    c.drawString(20 * mm, H - 80 * mm, "Sample top-ranked reasoning (generated from the candidate's own facts, no hallucination):")
-    y = H - 88 * mm
+    c.setFillColor(INK)
+    c.setFont("Helvetica-Bold", 11)
+    c.drawString(20 * mm, H - 84 * mm, "Sample top-ranked reasoning (from the candidate's own facts — no hallucination):")
+    y = H - 92 * mm
     for row in st["top5"][:4]:
-        c.setFillColor(ACCENT); c.setFont("Helvetica-Bold", 9)
+        c.setFillColor(AMBER)
+        c.setFont("Helvetica-Bold", 9.5)
         c.drawString(20 * mm, y, f"#{row['rank']}")
-        c.setFillColor(DARK); c.setFont("Helvetica", 8.3)
-        text = row["reasoning"]
-        # wrap
-        words, line, lines = text.split(), "", []
+        c.setFillColor(BODY)
+        c.setFont("Helvetica", 8.4)
+        words, line, lines = row["reasoning"].split(), "", []
         for w_ in words:
-            if c.stringWidth(line + " " + w_, "Helvetica", 8.3) < (W - 52 * mm):
+            if c.stringWidth(line + " " + w_, "Helvetica", 8.4) < (W - 52 * mm):
                 line = (line + " " + w_).strip()
             else:
                 lines.append(line); line = w_
         lines.append(line)
         for ln in lines[:2]:
-            c.drawString(30 * mm, y, ln); y -= 4.4 * mm
-        y -= 2.5 * mm
+            c.drawString(29 * mm, y, ln); y -= 4.6 * mm
+        y -= 2.8 * mm
     c.showPage()
 
     # ---- Slide 10: reproducibility ----
     d.header("Reproducible & defensible", "Built for Stage-3 reproduction and the interview")
     d.bullets([
         ("One command, CPU-only, no network at ranking time.",
-         "python rank.py --candidates candidates.jsonl --out submission.csv"),
+         "python rank.py --candidates candidates.jsonl --out submission.csv  (~3 min, < 5-min budget)"),
         ("Every score is inspectable.",
-         "Interpretable sub-scores per candidate — easy to defend in the 'walk through your architecture' interview."),
+         "Interpretable sub-scores per candidate — easy to defend in the architecture interview."),
         ("No LLM at inference → scales to a 200K pool in production.",
          "Exactly the latency/quality thinking the JD asks a Senior AI Engineer to demonstrate."),
         ("Honest, varied, fact-grounded reasoning passes manual review.",
@@ -320,7 +357,7 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--candidates", required=True)
     ap.add_argument("--submission", required=True)
-    ap.add_argument("--out", default="outputs/Redrob_Approach_Deck.pdf")
+    ap.add_argument("--out", default="deck/Redrob_Approach_Deck.pdf")
     ap.add_argument("--team", default="Mann Sutaria")
     ap.add_argument("--date", default="June 2026")
     a = ap.parse_args()
