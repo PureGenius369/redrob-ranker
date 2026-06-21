@@ -1,0 +1,33 @@
+[project]
+name = "redrob-ranker"
+version = "1.0.0"
+description = "Hybrid CPU-only candidate ranker for the Data & AI Challenge (Intelligent Candidate Discovery & Ranking)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Mann Sutaria" }]
+dependencies = [
+    "numpy==2.4.6",
+    "scikit-learn==1.9.0",
+    "scipy==1.18.0",
+    "orjson==3.11.9",
+    "PyYAML==6.0.3",
+    "model2vec==0.8.2",
+    "huggingface-hub==1.20.1",
+    "tokenizers==0.23.1",
+    "safetensors==0.8.0",
+]
+
+[project.optional-dependencies]
+sandbox = ["streamlit>=1.36"]
+dev = ["pytest>=8.0", "reportlab>=4.0"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]

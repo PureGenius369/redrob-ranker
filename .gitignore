@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# Vendored model weights + precomputed embeddings (regenerable via the scripts;
+# both are pre-computation artifacts, not committed). Ranking still runs offline.
+artifacts/
+
+# HuggingFace cache
+.cache/
+
+# Dataset (do not commit the 465 MB candidate pool or the org bundle)
+candidates.jsonl
+candidates.jsonl.gz
+*.jsonl
+data/
+[PUB]*/
+__MACOSX/
+
+# Scratch working dir (the final submission.csv + deck live at the repo root)
+outputs/
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,15 @@
+# Redrob ranker — runtime dependencies (CPU-only, no network during ranking).
+# Pinned for reproducibility. Install with:  pip install -r requirements.txt
+numpy==2.4.6
+scikit-learn==1.9.0          # LSA fallback backend (TF-IDF + TruncatedSVD)
+scipy==1.18.0
+orjson==3.11.9               # fast JSONL parsing
+PyYAML==6.0.3                # reading submission_metadata.yaml
+
+# Semantic backend: static embeddings (no torch, no GPU). Optional but default.
+# The model weights are fetched once via scripts/fetch_model.py (a pre-computation
+# step); the ranking step itself runs fully offline.
+model2vec==0.8.2
+huggingface-hub==1.20.1
+tokenizers==0.23.1
+safetensors==0.8.0

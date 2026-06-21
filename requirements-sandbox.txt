@@ -1,0 +1,5 @@
+# For the hosted sandbox demo (Streamlit Cloud / HuggingFace Spaces).
+# Includes the ranker's runtime deps plus Streamlit. On a small sample the app
+# encodes inline (model2vec if vendored, else the pure-sklearn LSA fallback).
+-r requirements.txt
+streamlit>=1.36
