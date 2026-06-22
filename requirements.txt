@@ -1,5 +1,6 @@
 # Redrob ranker — runtime dependencies (CPU-only, no network during ranking).
 # Pinned for reproducibility. Install with:  pip install -r requirements.txt
+streamlit>=1.36
 numpy==2.4.6
 scikit-learn==1.9.0          # LSA fallback backend (TF-IDF + TruncatedSVD)
 scipy==1.18.0
