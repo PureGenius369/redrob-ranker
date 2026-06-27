@@ -1,12 +1,3 @@
----
-title: Redrob Candidate Ranker
-colorFrom: blue
-colorTo: indigo
-sdk: streamlit
-app_file: app.py
-pinned: false
----
-
 # Redrob — Intelligent Candidate Discovery & Ranking
 
 A hybrid, CPU-only ranking system for the **Data & AI Challenge** (Intelligent
