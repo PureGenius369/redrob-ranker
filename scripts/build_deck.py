@@ -128,6 +128,39 @@ class Deck:
                 y -= dy
         return y
 
+    def _wrap(self, text, font, size, max_w):
+        """Greedy word-wrap to a max pixel width (prevents column overlap)."""
+        c = self.c
+        line, out = "", []
+        for w_ in text.split():
+            trial = (line + " " + w_).strip()
+            if c.stringWidth(trial, font, size) <= max_w:
+                line = trial
+            else:
+                if line:
+                    out.append(line)
+                line = w_
+        if line:
+            out.append(line)
+        return out
+
+    def col_bullets(self, items, x, y, max_w, size=11.5,
+                    line_gap=5.4 * mm, item_gap=4.8 * mm):
+        """Bulleted list confined to a column of width max_w; wraps long lines
+        so a wide left column never collides with the right column."""
+        c = self.c
+        font = "Helvetica-Bold"
+        for it in items:
+            c.setFillColor(AMBER)
+            c.rect(x, y + 0.4 * mm, 2.4 * mm, 2.4 * mm, fill=1, stroke=0)
+            c.setFont(font, size)
+            c.setFillColor(INK)
+            for ln in self._wrap(it, font, size, max_w):
+                c.drawString(x + 6 * mm, y, ln)
+                y -= line_gap
+            y -= item_gap
+        return y
+
     def box(self, x, y, w, h, fill, text, sub=None):
         c = self.c
         c.setFillColor(fill)
@@ -175,9 +208,6 @@ def build(st, out, team, date):
     c.setFillColor(CREAM)
     c.setFont("Helvetica-Bold", 12)
     c.drawString(20 * mm, 26 * mm, team)
-    c.setFillColor(MUTED)
-    c.setFont("Helvetica", 10)
-    c.drawString(20 * mm, 19 * mm, f"Senior AI Engineer (Founding Team) JD   ·   {date}")
     c.showPage()
 
     # ---- Slide 2: problem ----
@@ -196,24 +226,25 @@ def build(st, out, team, date):
 
     # ---- Slide 3: what the JD means ----
     d.header("Reading between the lines", "What the role actually needs")
+    LX, RX, LW, RW = 20 * mm, 120 * mm, 86 * mm, 150 * mm
     c.setFillColor(TEAL)
     c.setFont("Helvetica-Bold", 12.5)
-    c.drawString(20 * mm, H - 52 * mm, "FIT — the ideal hire")
-    d.bullets([
+    c.drawString(LX, H - 52 * mm, "FIT — the ideal hire")
+    d.col_bullets([
         "6–8 yrs, applied ML at product companies (not services)",
         "Shipped search / ranking / retrieval / recsys to real users",
         "Embeddings + vector/hybrid search + rigorous ranking eval",
         "Strong NLP/IR; in/near Pune–Noida; actually available",
-    ], x=20 * mm, y=H - 62 * mm, dy=10.5 * mm, size=11.5)
+    ], x=LX, y=H - 62 * mm, max_w=LW)
     c.setFillColor(BRICK)
     c.setFont("Helvetica-Bold", 12.5)
-    c.drawString(120 * mm, H - 52 * mm, "ANTI-FIT — explicit disqualifiers")
-    d.bullets([
+    c.drawString(RX, H - 52 * mm, "ANTI-FIT — explicit disqualifiers")
+    d.col_bullets([
         "Stuffed AI skills but a non-technical real title",
         "Pure research / academia with no production",
         "Only recent LangChain-on-OpenAI wrappers",
         "CV/speech-only · services-only · title-chasers · dormant",
-    ], x=120 * mm, y=H - 62 * mm, dy=10.5 * mm, size=11.5)
+    ], x=RX, y=H - 62 * mm, max_w=RW)
     c.showPage()
 
     # ---- Slide 4: architecture ----
@@ -265,22 +296,23 @@ def build(st, out, team, date):
 
     # ---- Slide 7: behavioral + honeypot ----
     d.header("Layers 3 & 4 — Available & possible", "Down-weight the unavailable; remove the impossible")
+    LX, RX, LW, RW = 20 * mm, 120 * mm, 86 * mm, 150 * mm
     c.setFillColor(GOLD)
     c.setFont("Helvetica-Bold", 12.5)
-    c.drawString(20 * mm, H - 52 * mm, "Behavioral modifier")
-    d.bullets([
+    c.drawString(LX, H - 52 * mm, "Behavioral modifier")
+    d.col_bullets([
         "'Dormant 6 months + 5% response = not available.'",
         "Bounded multiplier from 23 signals, calibrated to the pool.",
         "Recency, response rate, open-to-work, notice, demand.",
-    ], x=20 * mm, y=H - 62 * mm, dy=10.5 * mm, size=11.5)
+    ], x=LX, y=H - 62 * mm, max_w=LW)
     c.setFillColor(BRICK)
     c.setFont("Helvetica-Bold", 12.5)
-    c.drawString(120 * mm, H - 52 * mm, "Honeypot gate")
-    d.bullets([
+    c.drawString(RX, H - 52 * mm, "Honeypot gate")
+    d.col_bullets([
         "Detects internal impossibilities, not specific IDs.",
         "Tenure > time elapsed; ≥3 expert skills at 0 months.",
         f"{st['honeypots']} honeypots in our top-100 (cap is 10%).",
-    ], x=120 * mm, y=H - 62 * mm, dy=10.5 * mm, size=11.5)
+    ], x=RX, y=H - 62 * mm, max_w=RW)
     c.showPage()
 
     # ---- Slide 8: EDA ----
