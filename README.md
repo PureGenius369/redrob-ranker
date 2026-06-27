@@ -84,10 +84,10 @@ python validate_submission.py submission.csv
 
 | Constraint | Limit | This system |
 |------------|-------|-------------|
-| Compute | CPU only, no GPU | ✅ static embeddings + numpy/sklearn, no torch |
-| Network (ranking) | off | ✅ model vendored locally first; ranking makes no API calls |
-| Memory | ≤ 16 GB | ✅ streams the pool; keeps only compact per-candidate scalars |
-| Runtime (ranking) | ≤ 5 min | ✅ two-pass design; see `submission_metadata.yaml` |
+| Compute | CPU only, no GPU | static embeddings + numpy/sklearn, no torch |
+| Network (ranking) | off |  model vendored locally first; ranking makes no API calls |
+| Memory | ≤ 16 GB | streams the pool; keeps only compact per-candidate scalars |
+| Runtime (ranking) | ≤ 5 min |  two-pass design; see `submission_metadata.yaml` |
 
 The model download in step 2 is **pre-computation** (the spec allows this to
 exceed the 5-minute window); the ranking step in step 3 is what must fit the
