@@ -28,6 +28,9 @@ __MACOSX/
 # Scratch working dir (the final submission.csv + deck live at the repo root)
 outputs/
 
+# Downloaded H2S/Redrob slide template (input to scripts/fill_h2s_deck.py)
+deck/h2s_template.pptx
+
 # OS
 .DS_Store
 Thumbs.db
